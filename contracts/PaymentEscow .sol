@@ -22,13 +22,10 @@ contract PaymentEscow {
 
     /**
      * @dev Creates a PaymentEscow contract.
-     * @param token_ address of the ERC20 token contract
      */
-    constructor(address token_) {
-        require(token_ != address(0), "PaymentEscow: invalid base token address");
-        _token = IERC20(token_);
+    constructor() {
     }
-    
+
     /**
      * @dev Settle payment order.
      * @param amount amount of trading token
