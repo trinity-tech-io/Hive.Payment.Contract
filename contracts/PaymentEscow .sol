@@ -30,6 +30,13 @@ contract PaymentEscow {
         _token = IERC20(token_);
     }
 
+    /**
+     * @dev Settle payment order.
+     * @param amount amount of trading token
+     * @param to address of receiver
+     * @param memo jwt token
+     * @return the generated order id
+     */
 	function payOrder(uint256 amount, address to, string memory memo) external returns (uint256) {
         require(amount > 0, "PaymentEscow: can not transfer less than 0");
         require(to != address(0), "PaymentEscow: invalid receiver address");
@@ -45,13 +52,45 @@ contract PaymentEscow {
         return currentOrderId;
     }
 
+    /**
+     * @dev Get the payment order by given order id
+     * @param orderId order id to retrieve
+     * @return the payment order
+     */
 	function getOrder(uint256 orderId) view external returns (Order memory) {
         require(orderId >= 0 && orderId < lastOrderId, "PaymentEscow: invalid orderId");
         return orders[orderId];
     }
 
+    /**
+     * @dev Get the payment orders by given address
+     * @param addr addr to retrieve payment orders
+     * @return the list of payment orders
+     */
 	function getOrders(address addr) view external returns (Order[] memory) {
         require(addr != address(0), "PaymentEscow: invalid address");
         return orderToAddrs[addr];
+    }
+
+    /**
+     * @dev Get the payment order by given address
+     * @param addr addr to retrieve payment orders
+     * @param index index of payment orders of given address
+     * @return the payment order
+     */
+    function getOrderByAddress(address addr, uint256 index) view external returns (Order memory) {
+        require(addr != address(0), "PaymentEscow: invalid address");
+        require(index >= 0 && index < orderToAddrs[addr].length, "PaymentEscow: invalid orderId");
+        return orderToAddrs[addr][index];
+    }
+
+    /**
+     * @dev Get the count of payment orders by given address
+     * @param addr addr to retrieve count of payment orders
+     * @return the count of payment order
+     */
+    function getOrderCountByAddress(address addr) view external returns (uint256) {
+        require(addr != address(0), "PaymentEscow: invalid address");
+        return orderToAddrs[addr].length;
     }
 }
