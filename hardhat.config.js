@@ -23,4 +23,7 @@ module.exports = {
       accounts: [],
     },
   },
+  custom: {
+    ELATokenAddress: "0xe6fd75ff38adca4b97fbcd938c86b98772431867",
+  },
 };

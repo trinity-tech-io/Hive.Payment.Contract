@@ -1,3 +1,5 @@
+const config = require("../hardhat.config");
+
 async function main() {
   const [deployer] = await ethers.getSigners();
   console.log(
@@ -7,7 +9,7 @@ async function main() {
   );
 
   const PaymentEscow = await ethers.getContractFactory("PaymentEscow");
-  const paymentEscow = await PaymentEscow.deploy('0xe6fd75ff38adca4b97fbcd938c86b98772431867');
+  const paymentEscow = await PaymentEscow.deploy(config.custom.ELATokenAddress);
   console.log("PaymentEscow contract deployed to:", paymentEscow.address);
 }
 
