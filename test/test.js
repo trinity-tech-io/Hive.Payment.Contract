@@ -105,5 +105,74 @@ describe("MetERC20Token Contract", function () {
             expect(ownerOrders[0].to).to.be.equal(addr1.address);
             expect(ownerOrders[0].memo).to.be.equal(secondOrderMemo);
         });
+
+        it("Should be able to get order by address", async function () {
+            const addrZero = '0x0000000000000000000000000000000000000000';
+            const firstOrderAmount = 1;
+            const firstOrderMemo = "first payment order";
+            const secondOrderAmount = 2;
+            const secondOrderMemo = "second payment order";
+            const thirdOrderAmount = 3;
+            const thirdOrderMemo = "third payment order";
+            // ================ pay order ================ //
+            expect(await payment.connect(addr1).payOrder(firstOrderAmount, addr2.address, firstOrderMemo)).to.be.equal(0);
+            expect(await payment.connect(owner).payOrder(secondOrderAmount, addr1.address, secondOrderMemo)).to.be.equal(1);
+            expect(await payment.connect(addr1).payOrder(thirdOrderAmount, owner.address, thirdOrderMemo)).to.be.equal(2);
+
+            // ================ get orders ================ //
+            // check input address
+            await expect(payment.connect(addr1).getOrderByAddress(addrZero, 2)).to.be.revertedWith("PaymentEscow: invalid address");
+            await expect(payment.connect(addr1).getOrderByAddress(addrZero, 0)).to.be.revertedWith("PaymentEscow: invalid address");
+            await expect(payment.connect(addr1).getOrderByAddress(addr1.address, 0)).to.be.revertedWith("PaymentEscow: invalid orderId");
+            // check if getOrders depend on caller
+            expect(await payment.connect(owner).getOrderByAddress(addr1.address, 0)).to.be.equal(await payment.connect(addr1).getOrderByAddress(addr1.address, 0));
+            expect(await payment.connect(addr2).getOrderByAddress(addr1.address, 1)).to.be.equal(await payment.connect(addr1).getOrderByAddress(addr1.address, 1));
+            expect(await payment.connect(addr2).getOrderByAddress(owner.address, 0)).to.be.equal(await payment.connect(owner).getOrderByAddress(owner.address, 0));
+            // check retreived orderInfos
+            const firstOrder = await payment.getOrderByAddress(addr1.address, 0);
+            expect(firstOrder.orderId).to.be.equal(0);
+            expect(firstOrder.amount).to.be.equal(firstOrderAmount);
+            expect(firstOrder.to).to.be.equal(addr2.address);
+            expect(firstOrder.memo).to.be.equal(firstOrderMemo);
+
+            const thirdOrder = await payment.getOrderByAddress(addr1.address, 1);
+            expect(thirdOrder.orderId).to.be.equal(2);
+            expect(thirdOrder.amount).to.be.equal(thirdOrderAmount);
+            expect(thirdOrder.to).to.be.equal(addr2.address);
+            expect(thirdOrder.memo).to.be.equal(thirdOrderMemo);
+
+            const secondOrder = await payment.getOrderByAddress(owner.address, 0);
+            expect(secondOrder.orderId).to.be.equal(1);
+            expect(secondOrder.amount).to.be.equal(secondOrderAmount);
+            expect(secondOrder.to).to.be.equal(owner.address);
+            expect(secondOrder.memo).to.be.equal(secondOrderMemo);
+        });
+
+        it("Should be able to get order count by address", async function () {
+            const addrZero = '0x0000000000000000000000000000000000000000';
+            const firstOrderAmount = 1;
+            const firstOrderMemo = "first payment order";
+            const secondOrderAmount = 2;
+            const secondOrderMemo = "second payment order";
+            const thirdOrderAmount = 3;
+            const thirdOrderMemo = "third payment order";
+            // ================ pay order ================ //
+            expect(await payment.connect(addr1).payOrder(firstOrderAmount, addr2.address, firstOrderMemo)).to.be.equal(0);
+            expect(await payment.connect(owner).payOrder(secondOrderAmount, addr1.address, secondOrderMemo)).to.be.equal(1);
+            expect(await payment.connect(addr1).payOrder(thirdOrderAmount, owner.address, thirdOrderMemo)).to.be.equal(2);
+
+            // ================ get orders ================ //
+            // check input address
+            await expect(payment.connect(addr1).getOrderCountByAddress(addrZero)).to.be.revertedWith("PaymentEscow: invalid address");
+            // check if getOrders depend on caller
+            expect(await payment.connect(owner).getOrderCountByAddress(addr1.address)).to.be.equal(await payment.connect(addr1).getOrderCountByAddress(addr1.address));
+            expect(await payment.connect(addr2).getOrderCountByAddress(owner.address)).to.be.equal(await payment.connect(addr1).getOrderCountByAddress(owner.address));
+            // check retreived orderInfos
+            expect(await payment.getOrderCountByAddress(addr1.address)).to.be.equal((await payment.getOrders(addr1.address)).length);
+            expect(await payment.getOrderCountByAddress(owner.address)).to.be.equal((await payment.getOrders(addr1.address)).length);
+
+            expect(await payment.getOrderCountByAddress(addr1.address)).to.be.equal(2);
+            expect(await payment.getOrderCountByAddress(owner.address)).to.be.equal(1);
+        });
     });
 });
