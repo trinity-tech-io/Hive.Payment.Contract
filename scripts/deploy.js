@@ -9,7 +9,7 @@ async function main() {
   );
 
   const PaymentEscow = await ethers.getContractFactory("PaymentEscow");
-  const paymentEscow = await PaymentEscow.deploy(config.custom.ELATokenAddress);
+  const paymentEscow = await PaymentEscow.deploy();
   console.log("PaymentEscow contract deployed to:", paymentEscow.address);
 }
 

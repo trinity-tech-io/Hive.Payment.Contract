@@ -16,7 +16,6 @@ contract PaymentEscow {
     using SafeMath for uint256;
     using SafeERC20 for IERC20; 
 
-    IERC20 private immutable _token;
 	uint256 lastOrderId;
 	mapping(uint256 => Order) private orders;
 	mapping(address => Order[]) private orderToAddrs;
@@ -29,7 +28,7 @@ contract PaymentEscow {
         require(token_ != address(0), "PaymentEscow: invalid base token address");
         _token = IERC20(token_);
     }
-
+    
     /**
      * @dev Settle payment order.
      * @param amount amount of trading token
@@ -37,10 +36,13 @@ contract PaymentEscow {
      * @param memo jwt token
      * @return the generated order id
      */
-	function payOrder(uint256 amount, address to, string memory memo) external returns (uint256) {
+	function payOrder(uint256 amount, address to, string memory memo) external payable returns (uint256) {
         require(amount > 0, "PaymentEscow: can not transfer less than 0");
         require(to != address(0), "PaymentEscow: invalid receiver address");
-        _token.safeTransferFrom(msg.sender, to, amount);
+
+        (bool success, ) = payable(to).call{value: amount}("");
+        require(success, "PaymentEscow: pay order failed");
+
         Order memory newOrder;
         newOrder.orderId = lastOrderId;
         newOrder.amount = amount;

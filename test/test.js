@@ -15,7 +15,7 @@ describe("MetERC20Token Contract", function () {
 
     beforeEach(async function () {
         [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
-        payment = await PaymentEscow.deploy(config.custom.ELATokenAddress);
+        payment = await PaymentEscow.deploy();
         await payment.deployed();
     });
 
