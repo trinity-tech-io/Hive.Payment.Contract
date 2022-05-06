@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("MetERC20Token Contract", function () {
+describe("PaymentEscow Contract", function () {
     let PaymentEscow;
     let payment;
     let owner;
@@ -29,7 +29,11 @@ describe("MetERC20Token Contract", function () {
             await expect(payment.connect(addr1).payOrder(1000, addrZero, firstOrderMemo)).to.be.revertedWith("PaymentEscow: invalid receiver address");
             await expect(payment.connect(addr1).payOrder(0, addr2.address, firstOrderMemo)).to.be.revertedWith("PaymentEscow: can not transfer less than 0");
             // pay order
-            expect(await payment.connect(addr1).payOrder(1, addr2.address, firstOrderMemo)).to.be.equal(0);
+            // await owner.sendTransaction({
+            //     to: addr1.address,
+            //     value: ethers.utils.parseEther("1")
+            // })
+            expect(await payment.connect(addr1).payOrder('1', addr2.address, firstOrderMemo)).to.be.equal(0);
             expect(await payment.connect(owner).payOrder(1, addr1.address, secondOrderMemo)).to.be.equal(1);
         });
 

@@ -2,8 +2,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "hardhat/console.sol";
 
 contract PaymentEscow {
 	struct Order {
@@ -14,17 +14,10 @@ contract PaymentEscow {
 	}
 
     using SafeMath for uint256;
-    using SafeERC20 for IERC20; 
 
 	uint256 lastOrderId;
 	mapping(uint256 => Order) private orders;
 	mapping(address => Order[]) private orderToAddrs;
-
-    /**
-     * @dev Creates a PaymentEscow contract.
-     */
-    constructor() {
-    }
 
     /**
      * @dev Settle payment order.
@@ -36,7 +29,10 @@ contract PaymentEscow {
 	function payOrder(uint256 amount, address to, string memory memo) external payable returns (uint256) {
         require(amount > 0, "PaymentEscow: can not transfer less than 0");
         require(to != address(0), "PaymentEscow: invalid receiver address");
-
+        console.log(address(this).balance);
+        console.log(msg.sender.balance);
+        console.log(amount);
+        console.log(to.balance);
         (bool success, ) = payable(to).call{value: amount}("");
         require(success, "PaymentEscow: pay order failed");
 
@@ -92,4 +88,7 @@ contract PaymentEscow {
         require(addr != address(0), "PaymentEscow: invalid address");
         return orderToAddrs[addr].length;
     }
+
+    receive() external payable {}
+    fallback() external payable {}
 }
