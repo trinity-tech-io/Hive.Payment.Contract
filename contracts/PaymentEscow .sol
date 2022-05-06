@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "hardhat/console.sol";
 
 contract PaymentEscow {
 	struct Order {
@@ -31,6 +32,7 @@ contract PaymentEscow {
     }
 
 	function payOrder(uint256 amount, address to, string memory memo) external returns (uint256) {
+        console.log(amount);
         require(amount > 0, "PaymentEscow: can not transfer less than 0");
         require(to != address(0), "PaymentEscow: invalid receiver address");
         _token.safeTransferFrom(msg.sender, to, amount);
