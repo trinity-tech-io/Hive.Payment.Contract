@@ -1,5 +1,7 @@
 const { expect } = require("chai");
+const { parseEther } = require("ethers/lib/utils");
 const { ethers } = require("hardhat");
+const { getEvent } = require("./utils");
 
 describe("PaymentEscow Contract", function () {
     let PaymentEscow;
@@ -25,34 +27,30 @@ describe("PaymentEscow Contract", function () {
             const firstOrderMemo = "first payment order";
             const secondOrderMemo = "second payment order";
             // check input value
-            await expect(payment.connect(addr1).payOrder(0, addrZero, firstOrderMemo)).to.be.revertedWith("PaymentEscow: can not transfer less than 0");
-            await expect(payment.connect(addr1).payOrder(1000, addrZero, firstOrderMemo)).to.be.revertedWith("PaymentEscow: invalid receiver address");
-            await expect(payment.connect(addr1).payOrder(0, addr2.address, firstOrderMemo)).to.be.revertedWith("PaymentEscow: can not transfer less than 0");
+            await expect(payment.connect(addr1).payOrder(addrZero, firstOrderMemo, { value: parseEther('0') })).to.be.revertedWith("PaymentEscow: can not transfer less than 0");
+            await expect(payment.connect(addr1).payOrder(addrZero, firstOrderMemo, { value: parseEther('1') })).to.be.revertedWith("PaymentEscow: invalid receiver address");
+            await expect(payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: parseEther('0') })).to.be.revertedWith("PaymentEscow: can not transfer less than 0");
             // pay order
-            // await owner.sendTransaction({
-            //     to: addr1.address,
-            //     value: ethers.utils.parseEther("1")
-            // })
-            expect(await payment.connect(addr1).payOrder('1', addr2.address, firstOrderMemo)).to.be.equal(0);
-            expect(await payment.connect(owner).payOrder(1, addr1.address, secondOrderMemo)).to.be.equal(1);
+            expect((await getEvent(await payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: parseEther('1') }))).orderId).to.be.equal(0);
+            expect((await getEvent(await payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: parseEther('0.01') }))).orderId).to.be.equal(1);
         });
 
         it("Should be able to get order", async function () {
-            const firstOrderAmount = 1;
+            const firstOrderAmount = parseEther('1');
             const firstOrderMemo = "first payment order";
-            const secondOrderAmount = 2;
+            const secondOrderAmount = parseEther('0.01');
             const secondOrderMemo = "second payment order";
             
             // ================ pay order ================ //
-            expect(await payment.connect(addr1).payOrder(firstOrderAmount, addr2.address, firstOrderMemo)).to.be.equal(0);
-            expect(await payment.connect(owner).payOrder(secondOrderAmount, addr1.address, secondOrderMemo)).to.be.equal(1);
+            expect((await getEvent(await payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount }))).orderId).to.be.equal(0);
+            expect((await getEvent(await payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount }))).orderId).to.be.equal(1);
 
             // ================ get order ================ //
             // check input orderId
             await expect(payment.connect(addr1).getOrder(2)).to.be.revertedWith("PaymentEscow: invalid orderId");
             // check if getOrder depend on caller
-            expect(await payment.connect(owner).getOrder(0)).to.be.equal(await payment.connect(addr1).getOrder(0));
-            expect(await payment.connect(addr2).getOrder(1)).to.be.equal(await payment.connect(addr1).getOrder(1));
+            expect((await payment.connect(owner).getOrder(0)).orderId).to.be.equal((await payment.connect(addr1).getOrder(0)).orderId);
+            expect((await payment.connect(addr2).getOrder(1)).orderId).to.be.equal((await payment.connect(addr1).getOrder(1)).orderId);
             // check retreived orderInfo
                 // first: addr1 => addr2 : firstOrderAmount , firstOrderMemo
             const firstOrder = await payment.getOrder(0);
@@ -70,16 +68,16 @@ describe("PaymentEscow Contract", function () {
 
         it("Should be able to get orders", async function () {
             const addrZero = '0x0000000000000000000000000000000000000000';
-            const firstOrderAmount = 1;
+            const firstOrderAmount = parseEther('1');
             const firstOrderMemo = "first payment order";
-            const secondOrderAmount = 2;
+            const secondOrderAmount = parseEther('0.01');
             const secondOrderMemo = "second payment order";
-            const thirdOrderAmount = 3;
+            const thirdOrderAmount = parseEther('2.1');
             const thirdOrderMemo = "third payment order";
             // ================ pay order ================ //
-            expect(await payment.connect(addr1).payOrder(firstOrderAmount, addr2.address, firstOrderMemo)).to.be.equal(0);
-            expect(await payment.connect(owner).payOrder(secondOrderAmount, addr1.address, secondOrderMemo)).to.be.equal(1);
-            expect(await payment.connect(addr1).payOrder(thirdOrderAmount, owner.address, thirdOrderMemo)).to.be.equal(2);
+            expect((await getEvent(await payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount }))).orderId).to.be.equal(0);
+            expect((await getEvent(await payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount }))).orderId).to.be.equal(1);
+            expect((await getEvent(await payment.connect(addr1).payOrder(owner.address, thirdOrderMemo, { value: thirdOrderAmount }))).orderId).to.be.equal(2);
 
             // ================ get orders ================ //
             // check input address
@@ -112,26 +110,26 @@ describe("PaymentEscow Contract", function () {
 
         it("Should be able to get order by address", async function () {
             const addrZero = '0x0000000000000000000000000000000000000000';
-            const firstOrderAmount = 1;
+            const firstOrderAmount = parseEther('1');
             const firstOrderMemo = "first payment order";
-            const secondOrderAmount = 2;
+            const secondOrderAmount = parseEther('0.01');
             const secondOrderMemo = "second payment order";
-            const thirdOrderAmount = 3;
+            const thirdOrderAmount = parseEther('2.1');
             const thirdOrderMemo = "third payment order";
             // ================ pay order ================ //
-            expect(await payment.connect(addr1).payOrder(firstOrderAmount, addr2.address, firstOrderMemo)).to.be.equal(0);
-            expect(await payment.connect(owner).payOrder(secondOrderAmount, addr1.address, secondOrderMemo)).to.be.equal(1);
-            expect(await payment.connect(addr1).payOrder(thirdOrderAmount, owner.address, thirdOrderMemo)).to.be.equal(2);
+            expect((await getEvent(await payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount }))).orderId).to.be.equal(0);
+            expect((await getEvent(await payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount }))).orderId).to.be.equal(1);
+            expect((await getEvent(await payment.connect(addr1).payOrder(owner.address, thirdOrderMemo, { value: thirdOrderAmount }))).orderId).to.be.equal(2);
 
             // ================ get orders ================ //
             // check input address
             await expect(payment.connect(addr1).getOrderByAddress(addrZero, 2)).to.be.revertedWith("PaymentEscow: invalid address");
             await expect(payment.connect(addr1).getOrderByAddress(addrZero, 0)).to.be.revertedWith("PaymentEscow: invalid address");
-            await expect(payment.connect(addr1).getOrderByAddress(addr1.address, 0)).to.be.revertedWith("PaymentEscow: invalid orderId");
+            await expect(payment.connect(addr1).getOrderByAddress(addr1.address, 2)).to.be.revertedWith("PaymentEscow: invalid orderId");
             // check if getOrders depend on caller
-            expect(await payment.connect(owner).getOrderByAddress(addr1.address, 0)).to.be.equal(await payment.connect(addr1).getOrderByAddress(addr1.address, 0));
-            expect(await payment.connect(addr2).getOrderByAddress(addr1.address, 1)).to.be.equal(await payment.connect(addr1).getOrderByAddress(addr1.address, 1));
-            expect(await payment.connect(addr2).getOrderByAddress(owner.address, 0)).to.be.equal(await payment.connect(owner).getOrderByAddress(owner.address, 0));
+            expect((await payment.connect(owner).getOrderByAddress(addr1.address, 0)).orderId).to.be.equal((await payment.connect(addr1).getOrderByAddress(addr1.address, 0)).orderId);
+            expect((await payment.connect(addr2).getOrderByAddress(addr1.address, 1)).orderId).to.be.equal((await payment.connect(addr1).getOrderByAddress(addr1.address, 1)).orderId);
+            expect((await payment.connect(addr2).getOrderByAddress(owner.address, 0)).orderId).to.be.equal((await payment.connect(owner).getOrderByAddress(owner.address, 0)).orderId);
             // check retreived orderInfos
             const firstOrder = await payment.getOrderByAddress(addr1.address, 0);
             expect(firstOrder.orderId).to.be.equal(0);
@@ -142,28 +140,28 @@ describe("PaymentEscow Contract", function () {
             const thirdOrder = await payment.getOrderByAddress(addr1.address, 1);
             expect(thirdOrder.orderId).to.be.equal(2);
             expect(thirdOrder.amount).to.be.equal(thirdOrderAmount);
-            expect(thirdOrder.to).to.be.equal(addr2.address);
+            expect(thirdOrder.to).to.be.equal(owner.address);
             expect(thirdOrder.memo).to.be.equal(thirdOrderMemo);
 
             const secondOrder = await payment.getOrderByAddress(owner.address, 0);
             expect(secondOrder.orderId).to.be.equal(1);
             expect(secondOrder.amount).to.be.equal(secondOrderAmount);
-            expect(secondOrder.to).to.be.equal(owner.address);
+            expect(secondOrder.to).to.be.equal(addr1.address);
             expect(secondOrder.memo).to.be.equal(secondOrderMemo);
         });
 
         it("Should be able to get order count by address", async function () {
             const addrZero = '0x0000000000000000000000000000000000000000';
-            const firstOrderAmount = 1;
+            const firstOrderAmount = parseEther('1');
             const firstOrderMemo = "first payment order";
-            const secondOrderAmount = 2;
+            const secondOrderAmount = parseEther('0.01');
             const secondOrderMemo = "second payment order";
-            const thirdOrderAmount = 3;
+            const thirdOrderAmount = parseEther('2.1');
             const thirdOrderMemo = "third payment order";
             // ================ pay order ================ //
-            expect(await payment.connect(addr1).payOrder(firstOrderAmount, addr2.address, firstOrderMemo)).to.be.equal(0);
-            expect(await payment.connect(owner).payOrder(secondOrderAmount, addr1.address, secondOrderMemo)).to.be.equal(1);
-            expect(await payment.connect(addr1).payOrder(thirdOrderAmount, owner.address, thirdOrderMemo)).to.be.equal(2);
+            expect((await getEvent(await payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount }))).orderId).to.be.equal(0);
+            expect((await getEvent(await payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount }))).orderId).to.be.equal(1);
+            expect((await getEvent(await payment.connect(addr1).payOrder(owner.address, thirdOrderMemo, { value: thirdOrderAmount }))).orderId).to.be.equal(2);
 
             // ================ get orders ================ //
             // check input address
@@ -173,7 +171,7 @@ describe("PaymentEscow Contract", function () {
             expect(await payment.connect(addr2).getOrderCountByAddress(owner.address)).to.be.equal(await payment.connect(addr1).getOrderCountByAddress(owner.address));
             // check retreived orderInfos
             expect(await payment.getOrderCountByAddress(addr1.address)).to.be.equal((await payment.getOrders(addr1.address)).length);
-            expect(await payment.getOrderCountByAddress(owner.address)).to.be.equal((await payment.getOrders(addr1.address)).length);
+            expect(await payment.getOrderCountByAddress(owner.address)).to.be.equal((await payment.getOrders(owner.address)).length);
 
             expect(await payment.getOrderCountByAddress(addr1.address)).to.be.equal(2);
             expect(await payment.getOrderCountByAddress(owner.address)).to.be.equal(1);

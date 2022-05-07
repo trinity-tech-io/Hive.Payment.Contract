@@ -3,7 +3,6 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "hardhat/console.sol";
 
 contract PaymentEscow {
 	struct Order {
@@ -20,31 +19,35 @@ contract PaymentEscow {
 	mapping(address => Order[]) private orderToAddrs;
 
     /**
-     * @dev Settle payment order.
-     * @param amount amount of trading token
-     * @param to address of receiver
-     * @param memo jwt token
-     * @return the generated order id
+     * @dev MUST emit when a new pay order is created.
+     * The `from` argument MUST be the address of the sender who created the order.
+     * The `to` argument MUST be the address of the recipient.
+     * The `orderId` argument MUST be the id of the created order.
      */
-	function payOrder(uint256 amount, address to, string memory memo) external payable returns (uint256) {
-        require(amount > 0, "PaymentEscow: can not transfer less than 0");
+    event OrderPay(address from, address to, uint256 amount, uint256 orderId);
+
+    /**
+     * @dev Settle payment order.
+     * @param to address of recipient
+     * @param memo jwt token
+     */
+	function payOrder(address to, string memory memo) external payable {
+        require(msg.value > 0, "PaymentEscow: can not transfer less than 0");
         require(to != address(0), "PaymentEscow: invalid receiver address");
-        console.log(address(this).balance);
-        console.log(msg.sender.balance);
-        console.log(amount);
-        console.log(to.balance);
-        (bool success, ) = payable(to).call{value: amount}("");
+
+        (bool success, ) = payable(to).call{value: msg.value}("");
         require(success, "PaymentEscow: pay order failed");
 
         Order memory newOrder;
         newOrder.orderId = lastOrderId;
-        newOrder.amount = amount;
+        newOrder.amount = msg.value;
         newOrder.to = to;
         newOrder.memo = memo;
         orderToAddrs[msg.sender].push(newOrder);
+        orders[lastOrderId] = newOrder;
         uint256 currentOrderId = lastOrderId;
         lastOrderId = lastOrderId.add(1);
-        return currentOrderId;
+        emit OrderPay(msg.sender, to, msg.value, currentOrderId);
     }
 
     /**
