@@ -58,9 +58,3 @@ Deploy contracts by running such command in terminal
 $ npx hardhat run scripts/deploy.js --network elastostestnet
 ```
 
-- Initialize Mining rewards contract with market contract address.
-
-```
-$ npx hardhat run scripts/init.js --network elsatostestnet
-```
-
