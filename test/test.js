@@ -12,7 +12,7 @@ describe("PaymentEscow Contract", function () {
     let addrs;
 
     before(async function () {
-        PaymentEscow = await ethers.getContractFactory("PaymentEscow");
+        PaymentEscow = await ethers.getContractFactory("HivePaymentV1");
     });
 
     beforeEach(async function () {
@@ -40,7 +40,7 @@ describe("PaymentEscow Contract", function () {
             const firstOrderMemo = "first payment order";
             const secondOrderAmount = parseEther('0.01');
             const secondOrderMemo = "second payment order";
-            
+
             // ================ pay order ================ //
             expect((await getEvent(await payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount }))).orderId).to.be.equal(0);
             expect((await getEvent(await payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount }))).orderId).to.be.equal(1);

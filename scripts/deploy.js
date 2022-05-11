@@ -8,9 +8,9 @@ async function main() {
     (await deployer.getBalance()).toString()
   );
 
-  const PaymentEscow = await ethers.getContractFactory("PaymentEscow");
-  const paymentEscow = await PaymentEscow.deploy();
-  console.log("PaymentEscow contract deployed to:", paymentEscow.address);
+  const HivePayment = await ethers.getContractFactory("HivePaymentV1");
+  const hivePayment = await HivePayment.deploy();
+  console.log("HivePaymentV1 contract deployed to:", hivePayment.address);
 }
 
 main()
