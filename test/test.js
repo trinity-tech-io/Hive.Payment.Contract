@@ -3,8 +3,8 @@ const { parseEther } = require("ethers/lib/utils");
 const { ethers } = require("hardhat");
 const { getEvent } = require("./utils");
 
-describe("PaymentEscow Contract", function () {
-    let PaymentEscow;
+describe("HivePaymentV1 Contract", function () {
+    let HivePaymentV1;
     let payment;
     let owner;
     let addr1;
@@ -12,12 +12,12 @@ describe("PaymentEscow Contract", function () {
     let addrs;
 
     before(async function () {
-        PaymentEscow = await ethers.getContractFactory("HivePaymentV1");
+        HivePaymentV1 = await ethers.getContractFactory("HivePaymentV1");
     });
 
     beforeEach(async function () {
         [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
-        payment = await PaymentEscow.deploy();
+        payment = await HivePaymentV1.deploy();
         await payment.deployed();
     });
 
@@ -27,9 +27,9 @@ describe("PaymentEscow Contract", function () {
             const firstOrderMemo = "first payment order";
             const secondOrderMemo = "second payment order";
             // check input value
-            await expect(payment.connect(addr1).payOrder(addrZero, firstOrderMemo, { value: parseEther('0') })).to.be.revertedWith("PaymentEscow: can not transfer less than 0");
-            await expect(payment.connect(addr1).payOrder(addrZero, firstOrderMemo, { value: parseEther('1') })).to.be.revertedWith("PaymentEscow: invalid receiver address");
-            await expect(payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: parseEther('0') })).to.be.revertedWith("PaymentEscow: can not transfer less than 0");
+            await expect(payment.connect(addr1).payOrder(addrZero, firstOrderMemo, { value: parseEther('0') })).to.be.revertedWith("HivePaymentV1: can not transfer less than 0");
+            await expect(payment.connect(addr1).payOrder(addrZero, firstOrderMemo, { value: parseEther('1') })).to.be.revertedWith("HivePaymentV1: invalid receiver address");
+            await expect(payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: parseEther('0') })).to.be.revertedWith("HivePaymentV1: can not transfer less than 0");
             // pay order
             expect((await getEvent(await payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: parseEther('1') }))).orderId).to.be.equal(0);
             expect((await getEvent(await payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: parseEther('0.01') }))).orderId).to.be.equal(1);
@@ -47,7 +47,7 @@ describe("PaymentEscow Contract", function () {
 
             // ================ get order ================ //
             // check input orderId
-            await expect(payment.connect(addr1).getOrder(2)).to.be.revertedWith("PaymentEscow: invalid orderId");
+            await expect(payment.connect(addr1).getOrder(2)).to.be.revertedWith("HivePaymentV1: invalid orderId");
             // check if getOrder depend on caller
             expect((await payment.connect(owner).getOrder(0)).orderId).to.be.equal((await payment.connect(addr1).getOrder(0)).orderId);
             expect((await payment.connect(addr2).getOrder(1)).orderId).to.be.equal((await payment.connect(addr1).getOrder(1)).orderId);
@@ -81,7 +81,7 @@ describe("PaymentEscow Contract", function () {
 
             // ================ get orders ================ //
             // check input address
-            await expect(payment.connect(addr1).getOrders(addrZero)).to.be.revertedWith("PaymentEscow: invalid address");
+            await expect(payment.connect(addr1).getOrders(addrZero)).to.be.revertedWith("HivePaymentV1: invalid address");
             // check if getOrders depend on caller
             expect((await payment.connect(owner).getOrders(addr1.address)).length).to.be.equal(2);
             expect((await payment.connect(addr1).getOrders(addr1.address)).length).to.be.equal(2);
@@ -123,9 +123,9 @@ describe("PaymentEscow Contract", function () {
 
             // ================ get orders ================ //
             // check input address
-            await expect(payment.connect(addr1).getOrderByAddress(addrZero, 2)).to.be.revertedWith("PaymentEscow: invalid address");
-            await expect(payment.connect(addr1).getOrderByAddress(addrZero, 0)).to.be.revertedWith("PaymentEscow: invalid address");
-            await expect(payment.connect(addr1).getOrderByAddress(addr1.address, 2)).to.be.revertedWith("PaymentEscow: invalid orderId");
+            await expect(payment.connect(addr1).getOrderByAddress(addrZero, 2)).to.be.revertedWith("HivePaymentV1: invalid address");
+            await expect(payment.connect(addr1).getOrderByAddress(addrZero, 0)).to.be.revertedWith("HivePaymentV1: invalid address");
+            await expect(payment.connect(addr1).getOrderByAddress(addr1.address, 2)).to.be.revertedWith("HivePaymentV1: invalid orderId");
             // check if getOrders depend on caller
             expect((await payment.connect(owner).getOrderByAddress(addr1.address, 0)).orderId).to.be.equal((await payment.connect(addr1).getOrderByAddress(addr1.address, 0)).orderId);
             expect((await payment.connect(addr2).getOrderByAddress(addr1.address, 1)).orderId).to.be.equal((await payment.connect(addr1).getOrderByAddress(addr1.address, 1)).orderId);
@@ -165,7 +165,7 @@ describe("PaymentEscow Contract", function () {
 
             // ================ get orders ================ //
             // check input address
-            await expect(payment.connect(addr1).getOrderCountByAddress(addrZero)).to.be.revertedWith("PaymentEscow: invalid address");
+            await expect(payment.connect(addr1).getOrderCountByAddress(addrZero)).to.be.revertedWith("HivePaymentV1: invalid address");
             // check if getOrders depend on caller
             expect(await payment.connect(owner).getOrderCountByAddress(addr1.address)).to.be.equal(await payment.connect(addr1).getOrderCountByAddress(addr1.address));
             expect(await payment.connect(addr2).getOrderCountByAddress(owner.address)).to.be.equal(await payment.connect(addr1).getOrderCountByAddress(owner.address));
