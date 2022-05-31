@@ -30,7 +30,7 @@ module.exports = {
   },
   networks: {
     mainnet: {
-      url: "https://esc.elastos.io/eth",
+      url: "https://api.elastos.io/eth",
       accounts: [],
     },
     testnet: {
