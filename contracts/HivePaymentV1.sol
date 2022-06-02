@@ -3,8 +3,9 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import "./common/SafeMath.sol";
+import "./common/ReentrancyGuard.sol";
 
-contract HivePaymentV1 {
+contract HivePaymentV1 is ReentrancyGuard {
 	struct Order {
 		uint256 orderId;
 		uint256 amount;
@@ -25,13 +26,13 @@ contract HivePaymentV1 {
      * The `orderId` argument MUST be the id of the created order.
      */
     event OrderPay(address from, address to, uint256 amount, uint256 orderId);
-
+    
     /**
      * @dev Pay payment order.
      * @param to address of recipient
      * @param memo jwt token
      */
-	function payOrder(address to, string memory memo) external payable {
+	function payOrder(address to, string memory memo) external payable nonReentrant {
         require(msg.value > 0, "HivePaymentV1: can not transfer less than 0");
         require(to != address(0), "HivePaymentV1: invalid receiver address");
 

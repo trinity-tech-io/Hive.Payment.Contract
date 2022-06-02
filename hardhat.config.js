@@ -15,7 +15,7 @@ module.exports = {
   },
   networks: {
     elastosmainnet: {
-      url: "https://esc.elastos.io/eth",
+      url: "https://api.elastos.io/esc",
       accounts: [],
     },
     elastostestnet: {
