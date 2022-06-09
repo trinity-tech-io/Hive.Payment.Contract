@@ -182,5 +182,28 @@ describe("HivePaymentV1 Contract", function () {
             expect(await payment.getOrderCountByAddress(addr1.address)).to.be.equal(2);
             expect(await payment.getOrderCountByAddress(owner.address)).to.be.equal(1);
         });
+
+        it("Should be able to set / get platform fee", async function () {
+            // check initial platform fee config set by constructor
+            const initPlatformInfo = await payment.getPlatformFee();
+            expect(initPlatformInfo.platformAddress).to.be.equal(platform.address);
+            expect(initPlatformInfo.platformFeeRate).to.be.equal(feeRate);
+
+            // check input value
+            await expect(payment.connect(addr1).setPlatformFee(ethers.constants.AddressZero, 0)).to.be.revertedWith("Ownable: caller is not the owner");
+            await expect(payment.connect(platform).setPlatformFee(addr1.address, 0)).to.be.revertedWith("Ownable: caller is not the owner");
+            await expect(payment.connect(addr2).setPlatformFee(addr1.address, 101)).to.be.revertedWith("Ownable: caller is not the owner");
+            await expect(payment.connect(owner).setPlatformFee(ethers.constants.AddressZero, 0)).to.be.revertedWith("HivePaymentV1: invalid platform address");
+            await expect(payment.connect(owner).setPlatformFee(ethers.constants.AddressZero, 101)).to.be.revertedWith("HivePaymentV1: invalid platform address");
+            await expect(payment.connect(owner).setPlatformFee(addr1.address, 101)).to.be.revertedWith("HivePaymentV1: invalid platform fee rate");
+
+            // set platform fee config
+            await expect(payment.connect(owner).setPlatformFee(addr2.address, 10)).to.emit(payment, 'PlatformFeeChanged').withArgs(addr2.address, 10);
+            
+            // check updated platform fee config
+            const updatedPlatformInfo = await payment.getPlatformFee();
+            expect(updatedPlatformInfo.platformAddress).to.be.equal(addr2.address);
+            expect(updatedPlatformInfo.platformFeeRate).to.be.equal(10);
+        });
     });
 });

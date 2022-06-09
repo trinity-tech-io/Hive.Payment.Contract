@@ -140,6 +140,7 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
      */
     function _setPlatformFee(address platformAddress, uint256 platformFeeRate) internal returns (bool) {
         require(platformAddress != address(0), "HivePaymentV1: invalid platform address");
+        require(platformFeeRate <= _RATE_BASE, "HivePaymentV1: invalid platform fee rate");
         _platformAddress = platformAddress;
         _platformFeeRate = platformFeeRate;
         emit PlatformFeeChanged(platformAddress, platformFeeRate);
