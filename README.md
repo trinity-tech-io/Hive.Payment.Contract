@@ -29,15 +29,17 @@ module.exports = {
     },
   },
   networks: {
-    mainnet: {
-      url: "https://api.elastos.io/eth",
+    elastosmainnet: {
+      url: "https://api.elastos.io/esc",
       accounts: [],
     },
-    testnet: {
+    elastostestnet: {
       url: "https://api-testnet.elastos.io/eth",
       accounts: [],
     },
   },
+  platformAddress: '',
+  platformFeeRate: 5,
 };
 ```
 
