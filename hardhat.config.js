@@ -23,6 +23,6 @@ module.exports = {
       accounts: [],
     },
   },
-  platformAddress: '',
+  platformAddress: '0x803146F641eaF3FaC48Dd9aAb043cF02fcA088B6',
   platformFeeRate: 5,
 };

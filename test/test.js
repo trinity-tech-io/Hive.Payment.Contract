@@ -2,11 +2,14 @@ const { expect } = require("chai");
 const { parseEther } = require("ethers/lib/utils");
 const { ethers } = require("hardhat");
 const { getEvent } = require("./utils");
+const config = require("../hardhat.config");
 
 describe("HivePaymentV1 Contract", function () {
     let HivePaymentV1;
     let payment;
     let owner;
+    let platform;
+    let feeRate;
     let addr1;
     let addr2;
     let addrs;
@@ -16,23 +19,29 @@ describe("HivePaymentV1 Contract", function () {
     });
 
     beforeEach(async function () {
-        [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
-        payment = await HivePaymentV1.deploy();
+        [owner, platform, addr1, addr2, ...addrs] = await ethers.getSigners();
+        feeRate = 5;
+        payment = await HivePaymentV1.deploy(platform.address, feeRate);
         await payment.deployed();
     });
 
     describe("Deployments", function() {
         it("Should be able to pay order", async function () {
-            const addrZero = '0x0000000000000000000000000000000000000000';
             const firstOrderMemo = "first payment order";
+            const firstOrderAmount = parseEther('1');
             const secondOrderMemo = "second payment order";
+            const secondOrderAmount = parseEther('0.01');
             // check input value
-            await expect(payment.connect(addr1).payOrder(addrZero, firstOrderMemo, { value: parseEther('0') })).to.be.revertedWith("HivePaymentV1: can not transfer less than 0");
-            await expect(payment.connect(addr1).payOrder(addrZero, firstOrderMemo, { value: parseEther('1') })).to.be.revertedWith("HivePaymentV1: invalid receiver address");
+            await expect(payment.connect(addr1).payOrder(ethers.constants.AddressZero, firstOrderMemo, { value: parseEther('0') })).to.be.revertedWith("HivePaymentV1: can not transfer less than 0");
+            await expect(payment.connect(addr1).payOrder(ethers.constants.AddressZero, firstOrderMemo, { value: parseEther('1') })).to.be.revertedWith("HivePaymentV1: invalid receiver address");
             await expect(payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: parseEther('0') })).to.be.revertedWith("HivePaymentV1: can not transfer less than 0");
+            // check platform fee config
+            const platformInfo = await payment.getPlatformFee();
+            expect(platformInfo.platformAddress).to.be.equal(platform.address);
+            expect(platformInfo.platformFeeRate).to.be.equal(feeRate);
             // pay order
-            expect((await getEvent(await payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: parseEther('1') }))).orderId).to.be.equal(0);
-            expect((await getEvent(await payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: parseEther('0.01') }))).orderId).to.be.equal(1);
+            await expect(payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount })).to.emit(payment, 'OrderPay').withArgs(addr1.address, addr2.address, firstOrderAmount, 0);
+            await expect(payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount })).to.emit(payment, 'OrderPay').withArgs(owner.address, addr1.address, secondOrderAmount, 1);
         });
 
         it("Should be able to get order", async function () {
@@ -42,9 +51,9 @@ describe("HivePaymentV1 Contract", function () {
             const secondOrderMemo = "second payment order";
 
             // ================ pay order ================ //
-            expect((await getEvent(await payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount }))).orderId).to.be.equal(0);
-            expect((await getEvent(await payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount }))).orderId).to.be.equal(1);
-
+            await expect(payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount })).to.emit(payment, 'OrderPay').withArgs(addr1.address, addr2.address, firstOrderAmount, 0);
+            await expect(payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount })).to.emit(payment, 'OrderPay').withArgs(owner.address, addr1.address, secondOrderAmount, 1);
+            
             // ================ get order ================ //
             // check input orderId
             await expect(payment.connect(addr1).getOrder(2)).to.be.revertedWith("HivePaymentV1: invalid orderId");
@@ -67,7 +76,6 @@ describe("HivePaymentV1 Contract", function () {
         });
 
         it("Should be able to get orders", async function () {
-            const addrZero = '0x0000000000000000000000000000000000000000';
             const firstOrderAmount = parseEther('1');
             const firstOrderMemo = "first payment order";
             const secondOrderAmount = parseEther('0.01');
@@ -75,13 +83,13 @@ describe("HivePaymentV1 Contract", function () {
             const thirdOrderAmount = parseEther('2.1');
             const thirdOrderMemo = "third payment order";
             // ================ pay order ================ //
-            expect((await getEvent(await payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount }))).orderId).to.be.equal(0);
-            expect((await getEvent(await payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount }))).orderId).to.be.equal(1);
-            expect((await getEvent(await payment.connect(addr1).payOrder(owner.address, thirdOrderMemo, { value: thirdOrderAmount }))).orderId).to.be.equal(2);
+            await expect(payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount })).to.emit(payment, 'OrderPay').withArgs(addr1.address, addr2.address, firstOrderAmount, 0);
+            await expect(payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount })).to.emit(payment, 'OrderPay').withArgs(owner.address, addr1.address, secondOrderAmount, 1);
+            await expect(payment.connect(addr1).payOrder(owner.address, thirdOrderMemo, { value: thirdOrderAmount })).to.emit(payment, 'OrderPay').withArgs(addr1.address, owner.address, thirdOrderAmount, 2);
 
             // ================ get orders ================ //
             // check input address
-            await expect(payment.connect(addr1).getOrders(addrZero)).to.be.revertedWith("HivePaymentV1: invalid address");
+            await expect(payment.connect(addr1).getOrders(ethers.constants.AddressZero)).to.be.revertedWith("HivePaymentV1: invalid address");
             // check if getOrders depend on caller
             expect((await payment.connect(owner).getOrders(addr1.address)).length).to.be.equal(2);
             expect((await payment.connect(addr1).getOrders(addr1.address)).length).to.be.equal(2);
@@ -109,7 +117,6 @@ describe("HivePaymentV1 Contract", function () {
         });
 
         it("Should be able to get order by address", async function () {
-            const addrZero = '0x0000000000000000000000000000000000000000';
             const firstOrderAmount = parseEther('1');
             const firstOrderMemo = "first payment order";
             const secondOrderAmount = parseEther('0.01');
@@ -117,14 +124,14 @@ describe("HivePaymentV1 Contract", function () {
             const thirdOrderAmount = parseEther('2.1');
             const thirdOrderMemo = "third payment order";
             // ================ pay order ================ //
-            expect((await getEvent(await payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount }))).orderId).to.be.equal(0);
-            expect((await getEvent(await payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount }))).orderId).to.be.equal(1);
-            expect((await getEvent(await payment.connect(addr1).payOrder(owner.address, thirdOrderMemo, { value: thirdOrderAmount }))).orderId).to.be.equal(2);
+            await expect(payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount })).to.emit(payment, 'OrderPay').withArgs(addr1.address, addr2.address, firstOrderAmount, 0);
+            await expect(payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount })).to.emit(payment, 'OrderPay').withArgs(owner.address, addr1.address, secondOrderAmount, 1);
+            await expect(payment.connect(addr1).payOrder(owner.address, thirdOrderMemo, { value: thirdOrderAmount })).to.emit(payment, 'OrderPay').withArgs(addr1.address, owner.address, thirdOrderAmount, 2);
 
             // ================ get orders ================ //
             // check input address
-            await expect(payment.connect(addr1).getOrderByAddress(addrZero, 2)).to.be.revertedWith("HivePaymentV1: invalid address");
-            await expect(payment.connect(addr1).getOrderByAddress(addrZero, 0)).to.be.revertedWith("HivePaymentV1: invalid address");
+            await expect(payment.connect(addr1).getOrderByAddress(ethers.constants.AddressZero, 2)).to.be.revertedWith("HivePaymentV1: invalid address");
+            await expect(payment.connect(addr1).getOrderByAddress(ethers.constants.AddressZero, 0)).to.be.revertedWith("HivePaymentV1: invalid address");
             await expect(payment.connect(addr1).getOrderByAddress(addr1.address, 2)).to.be.revertedWith("HivePaymentV1: invalid orderId");
             // check if getOrders depend on caller
             expect((await payment.connect(owner).getOrderByAddress(addr1.address, 0)).orderId).to.be.equal((await payment.connect(addr1).getOrderByAddress(addr1.address, 0)).orderId);
@@ -151,7 +158,6 @@ describe("HivePaymentV1 Contract", function () {
         });
 
         it("Should be able to get order count by address", async function () {
-            const addrZero = '0x0000000000000000000000000000000000000000';
             const firstOrderAmount = parseEther('1');
             const firstOrderMemo = "first payment order";
             const secondOrderAmount = parseEther('0.01');
@@ -159,13 +165,13 @@ describe("HivePaymentV1 Contract", function () {
             const thirdOrderAmount = parseEther('2.1');
             const thirdOrderMemo = "third payment order";
             // ================ pay order ================ //
-            expect((await getEvent(await payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount }))).orderId).to.be.equal(0);
-            expect((await getEvent(await payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount }))).orderId).to.be.equal(1);
-            expect((await getEvent(await payment.connect(addr1).payOrder(owner.address, thirdOrderMemo, { value: thirdOrderAmount }))).orderId).to.be.equal(2);
+            await expect(payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount })).to.emit(payment, 'OrderPay').withArgs(addr1.address, addr2.address, firstOrderAmount, 0);
+            await expect(payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount })).to.emit(payment, 'OrderPay').withArgs(owner.address, addr1.address, secondOrderAmount, 1);
+            await expect(payment.connect(addr1).payOrder(owner.address, thirdOrderMemo, { value: thirdOrderAmount })).to.emit(payment, 'OrderPay').withArgs(addr1.address, owner.address, thirdOrderAmount, 2);
 
             // ================ get orders ================ //
             // check input address
-            await expect(payment.connect(addr1).getOrderCountByAddress(addrZero)).to.be.revertedWith("HivePaymentV1: invalid address");
+            await expect(payment.connect(addr1).getOrderCountByAddress(ethers.constants.AddressZero)).to.be.revertedWith("HivePaymentV1: invalid address");
             // check if getOrders depend on caller
             expect(await payment.connect(owner).getOrderCountByAddress(addr1.address)).to.be.equal(await payment.connect(addr1).getOrderCountByAddress(addr1.address));
             expect(await payment.connect(addr2).getOrderCountByAddress(owner.address)).to.be.equal(await payment.connect(addr1).getOrderCountByAddress(owner.address));
