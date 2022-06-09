@@ -31,13 +31,19 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
      * The `orderId` argument MUST be the id of the created order.
      */
     event OrderPay(address from, address to, uint256 amount, uint256 orderId);
+
+    /**
+     * @dev MUST emit when platform fee config is updated.
+     * The `platformAddress` argument MUST be the address of the platform.
+     * The `platformFeeRate` argument MUST be the platform fee rate.
+     */
+    event PlatformFeeChanged(address platformAddress, uint256 platformFeeRate);
     
     /**
      * @dev Creates a hive payment contract.
      */
     constructor (address platformAddress_, uint256 platformFeeRate_) {
-        _platformAddress = platformAddress_;
-        _platformFeeRate = platformFeeRate_;
+        require(_setPlatformFee(platformAddress_, platformFeeRate_), "HivePaymentV1: create hive payment contract failed");
     }
 
     /**
@@ -78,7 +84,7 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
     /**
      * @dev Get the payment order by given order id
      * @param orderId order id to retrieve
-     * @return the payment order
+     * @return order payment order
      */
 	function getOrder(uint256 orderId) view external returns (Order memory) {
         require(orderId >= 0 && orderId < lastOrderId, "HivePaymentV1: invalid orderId");
@@ -88,7 +94,7 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
     /**
      * @dev Get the payment orders by given address
      * @param addr addr to retrieve payment orders
-     * @return the list of payment orders
+     * @return orders list of payment orders
      */
 	function getOrders(address addr) view external returns (Order[] memory) {
         require(addr != address(0), "HivePaymentV1: invalid address");
@@ -99,7 +105,7 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
      * @dev Get the payment order by given address
      * @param addr addr to retrieve payment orders
      * @param index index of payment orders of given address
-     * @return the payment order
+     * @return order payment order
      */
     function getOrderByAddress(address addr, uint256 index) view external returns (Order memory) {
         require(addr != address(0), "HivePaymentV1: invalid address");
@@ -110,7 +116,7 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
     /**
      * @dev Get the count of payment orders by given address
      * @param addr addr to retrieve count of payment orders
-     * @return the count of payment order
+     * @return orderCount count of payment order
      */
     function getOrderCountByAddress(address addr) view external returns (uint256) {
         require(addr != address(0), "HivePaymentV1: invalid address");
@@ -123,9 +129,21 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
      * @param platformFeeRate platform fee rate
      */
     function setPlatformFee(address platformAddress, uint256 platformFeeRate) external onlyOwner {
+        require(_setPlatformFee(platformAddress, platformFeeRate), "HivePaymentV1: set platform fee failed");
+    }
+
+    /**
+     * @dev Set platform fee config.
+     * @param platformAddress address of platform
+     * @param platformFeeRate platform fee rate
+     * @return success success or failed
+     */
+    function _setPlatformFee(address platformAddress, uint256 platformFeeRate) internal returns (bool) {
         require(platformAddress != address(0), "HivePaymentV1: invalid platform address");
         _platformAddress = platformAddress;
         _platformFeeRate = platformFeeRate;
+        emit PlatformFeeChanged(platformAddress, platformFeeRate);
+        return true;
     }
 
     /**

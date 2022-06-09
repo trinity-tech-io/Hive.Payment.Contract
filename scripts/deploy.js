@@ -9,7 +9,7 @@ async function main() {
   );
 
   const HivePayment = await ethers.getContractFactory("HivePaymentV1");
-  const hivePayment = await HivePayment.deploy();
+  const hivePayment = await HivePayment.deploy(config.platformAddress, config.platformFeeRate);
   console.log("HivePaymentV1 contract deployed to:", hivePayment.address);
 }
 
