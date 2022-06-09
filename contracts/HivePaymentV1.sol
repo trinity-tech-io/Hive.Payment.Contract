@@ -4,8 +4,9 @@ pragma abicoder v2;
 
 import "./common/SafeMath.sol";
 import "./common/ReentrancyGuard.sol";
+import "./common/Ownable.sol";
 
-contract HivePaymentV1 is ReentrancyGuard {
+contract HivePaymentV1 is Ownable, ReentrancyGuard {
 	struct Order {
 		uint256 orderId;
 		uint256 amount;
@@ -15,7 +16,10 @@ contract HivePaymentV1 is ReentrancyGuard {
 
     using SafeMath for uint256;
 
-	uint256 lastOrderId;
+    uint256 private constant _RATE_BASE = 100;
+    uint256 private _platformFeeRate;
+    address private _platformAddress;
+	uint256 private lastOrderId;
 	mapping(uint256 => Order) private orders;
 	mapping(address => Order[]) private orderToAddrs;
 
@@ -23,10 +27,19 @@ contract HivePaymentV1 is ReentrancyGuard {
      * @dev MUST emit when a new pay order is created.
      * The `from` argument MUST be the address of the sender who created the order.
      * The `to` argument MUST be the address of the recipient.
+     * The `amount` argument MUST be the amount of paid token.
      * The `orderId` argument MUST be the id of the created order.
      */
     event OrderPay(address from, address to, uint256 amount, uint256 orderId);
     
+    /**
+     * @dev Creates a hive payment contract.
+     */
+    constructor (address platformAddress_, uint256 platformFeeRate_) {
+        _platformAddress = platformAddress_;
+        _platformFeeRate = platformFeeRate_;
+    }
+
     /**
      * @dev Pay payment order.
      * @param to address of recipient
@@ -36,8 +49,17 @@ contract HivePaymentV1 is ReentrancyGuard {
         require(msg.value > 0, "HivePaymentV1: can not transfer less than 0");
         require(to != address(0), "HivePaymentV1: invalid receiver address");
 
-        (bool success, ) = payable(to).call{value: msg.value}("");
-        require(success, "HivePaymentV1: pay order failed");
+        uint256 platformFee = msg.value.mul(_platformFeeRate).div(_RATE_BASE);
+        uint256 transferAmount = msg.value.sub(platformFee);
+        bool success;
+        if (platformFee > 0) {
+            (success, ) = payable(_platformAddress).call{value: platformFee}("");
+            require(success, "HivePaymentV1: platform fee transfer failed");    
+        }
+        if (transferAmount > 0) {
+            (success, ) = payable(to).call{value: transferAmount}("");
+            require(success, "HivePaymentV1: pay order failed");
+        }
 
         Order memory newOrder;
         newOrder.orderId = lastOrderId;
@@ -93,6 +115,27 @@ contract HivePaymentV1 is ReentrancyGuard {
     function getOrderCountByAddress(address addr) view external returns (uint256) {
         require(addr != address(0), "HivePaymentV1: invalid address");
         return orderToAddrs[addr].length;
+    }
+
+    /**
+     * @dev Set platform fee config.
+     * @param platformAddress address of platform
+     * @param platformFeeRate platform fee rate
+     */
+    function setPlatformFee(address platformAddress, uint256 platformFeeRate) external onlyOwner {
+        require(platformAddress != address(0), "HivePaymentV1: invalid platform address");
+        _platformAddress = platformAddress;
+        _platformFeeRate = platformFeeRate;
+    }
+
+    /**
+     * @dev Get platform fee config
+     * @return platformAddress address of platform
+     * @return platformFeeRate platform fee rate
+     */
+    function getPlatformFee() view external returns (address platformAddress, uint256 platformFeeRate) {
+        platformAddress = _platformAddress;
+        platformFeeRate = _platformFeeRate;
     }
 
     receive() external payable {}
