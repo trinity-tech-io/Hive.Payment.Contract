@@ -86,7 +86,7 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
      * @param orderId order id to retrieve
      * @return order payment order
      */
-	function getOrder(uint256 orderId) view external returns (Order memory) {
+	function getOrder(uint256 orderId) external view returns (Order memory) {
         require(orderId >= 0 && orderId < lastOrderId, "HivePaymentV1: invalid orderId");
         return orders[orderId];
     }
@@ -96,7 +96,7 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
      * @param addr addr to retrieve payment orders
      * @return orders list of payment orders
      */
-	function getOrders(address addr) view external returns (Order[] memory) {
+	function getOrders(address addr) external view returns (Order[] memory) {
         require(addr != address(0), "HivePaymentV1: invalid address");
         return orderToAddrs[addr];
     }
@@ -107,7 +107,7 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
      * @param index index of payment orders of given address
      * @return order payment order
      */
-    function getOrderByAddress(address addr, uint256 index) view external returns (Order memory) {
+    function getOrderByAddress(address addr, uint256 index) external view returns (Order memory) {
         require(addr != address(0), "HivePaymentV1: invalid address");
         require(index >= 0 && index < orderToAddrs[addr].length, "PaymentEscow: invalid orderId");
         return orderToAddrs[addr][index];
@@ -118,7 +118,7 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
      * @param addr addr to retrieve count of payment orders
      * @return orderCount count of payment order
      */
-    function getOrderCountByAddress(address addr) view external returns (uint256) {
+    function getOrderCountByAddress(address addr) external view returns (uint256) {
         require(addr != address(0), "HivePaymentV1: invalid address");
         return orderToAddrs[addr].length;
     }
@@ -152,7 +152,7 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
      * @return platformAddress address of platform
      * @return platformFeeRate platform fee rate
      */
-    function getPlatformFee() view external returns (address platformAddress, uint256 platformFeeRate) {
+    function getPlatformFee() external view returns (address platformAddress, uint256 platformFeeRate) {
         platformAddress = _platformAddress;
         platformFeeRate = _platformFeeRate;
     }

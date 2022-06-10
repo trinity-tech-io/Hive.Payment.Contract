@@ -23,6 +23,7 @@ module.exports = {
       accounts: [],
     },
   },
+  contractAddress: '',
   platformAddress: '',
   platformFeeRate: 5,
 };
