@@ -3,6 +3,7 @@ const { parseEther } = require("ethers/lib/utils");
 const { ethers } = require("hardhat");
 const { getEvent } = require("./utils");
 const config = require("../hardhat.config");
+const { BigNumber } = require("ethers");
 
 describe("HivePaymentV1 Contract", function () {
     let HivePaymentV1;
@@ -40,8 +41,24 @@ describe("HivePaymentV1 Contract", function () {
             expect(platformInfo.platformAddress).to.be.equal(platform.address);
             expect(platformInfo.platformFeeRate).to.be.equal(feeRate);
             // pay order
+
+            // check balance
+            const provider = ethers.provider;
+            let preBalalnceAddr1 = await provider.getBalance(addr1.address);
+            let preBalalnceAddr2 = await provider.getBalance(addr2.address);
+            let preBalalncePlat = await provider.getBalance(platform.address);
             await expect(payment.connect(addr1).payOrder(addr2.address, firstOrderMemo, { value: firstOrderAmount })).to.emit(payment, 'OrderPay').withArgs(addr1.address, addr2.address, firstOrderAmount, 0);
+            console.log("Consumption: ", (preBalalnceAddr1).sub(await provider.getBalance(addr1.address)).sub(firstOrderAmount));
+            expect((await provider.getBalance(addr2.address)).sub(preBalalnceAddr2)).to.be.equal(firstOrderAmount.mul(100 - feeRate).div(100));
+            expect((await provider.getBalance(platform.address)).sub(preBalalncePlat)).to.be.equal(firstOrderAmount.mul(feeRate).div(100));
+            // check balance
+            let preBalalnceOwner = await provider.getBalance(owner.address);
+            preBalalnceAddr1 = await provider.getBalance(addr1.address);
+            preBalalncePlat = await provider.getBalance(platform.address);
             await expect(payment.connect(owner).payOrder(addr1.address, secondOrderMemo, { value: secondOrderAmount })).to.emit(payment, 'OrderPay').withArgs(owner.address, addr1.address, secondOrderAmount, 1);
+            console.log("Consumption: ", (preBalalnceOwner).sub(await provider.getBalance(owner.address)).sub(secondOrderAmount));
+            expect((await provider.getBalance(addr1.address)).sub(preBalalnceAddr1)).to.be.equal(secondOrderAmount.mul(100 - feeRate).div(100));
+            expect((await provider.getBalance(platform.address)).sub(preBalalncePlat)).to.be.equal(secondOrderAmount.mul(feeRate).div(100));
         });
 
         it("Should be able to get order", async function () {
