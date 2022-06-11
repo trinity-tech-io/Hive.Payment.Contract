@@ -1,5 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("./tasks/flatter");
+require("./tasks/delay");
+
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
