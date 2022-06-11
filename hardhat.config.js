@@ -26,4 +26,6 @@ module.exports = {
   contractAddress: '',
   platformAddress: '',
   platformFeeRate: 5,
+  testAddress1: '',
+  testAddress2: '',
 };

@@ -16,8 +16,8 @@ async function main() {
     console.log(events.length, ' / ', i + 1)
     const from = events[i].args.from;
     const to = events[i].args.to;
-    const amount = events[i].args.amount;
-    const orderId = events[i].args.orderId;
+    const amount = events[i].args.amount / 1e18;
+    const orderId = events[i].args.orderId.toString();
     orders.push({from: from, to: to, amount: amount, orderId: orderId});
   }
   await writeToFile("orders.json", JSON.stringify(orders));

@@ -1,9 +1,7 @@
 const { expect } = require("chai");
 const { parseEther } = require("ethers/lib/utils");
 const { ethers } = require("hardhat");
-const { getEvent } = require("./utils");
 const config = require("../hardhat.config");
-const { BigNumber } = require("ethers");
 
 describe("HivePaymentV1 Contract", function () {
     let HivePaymentV1;
