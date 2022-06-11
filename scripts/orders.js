@@ -14,11 +14,12 @@ async function main() {
   
   for (let i = 0; i < events.length; i ++) {
     console.log(events.length, ' / ', i + 1)
+    const txHash = events[i].transactionHash;
     const from = events[i].args.from;
     const to = events[i].args.to;
     const amount = events[i].args.amount / 1e18;
     const orderId = events[i].args.orderId.toString();
-    orders.push({from: from, to: to, amount: amount, orderId: orderId});
+    orders.push({txHash: txHash, from: from, to: to, amount: amount, orderId: orderId});
   }
   await writeToFile("orders.json", JSON.stringify(orders));
   console.log("Displaying paid orders  =====>>");
