@@ -28,4 +28,5 @@ module.exports = {
   platformFeeRate: 5,
   testAddress1: '',
   testAddress2: '',
+  testAddress3: '',
 };
