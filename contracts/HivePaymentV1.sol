@@ -56,16 +56,13 @@ contract HivePaymentV1 is Ownable, ReentrancyGuard {
         require(to != address(0), "HivePaymentV1: invalid receiver address");
 
         uint256 platformFee = msg.value.mul(_platformFeeRate).div(_RATE_BASE);
-        uint256 transferAmount = msg.value.sub(platformFee);
         bool success;
         if (platformFee > 0) {
             (success, ) = payable(_platformAddress).call{value: platformFee}("");
             require(success, "HivePaymentV1: platform fee transfer failed");    
         }
-        if (transferAmount > 0) {
-            (success, ) = payable(to).call{value: transferAmount}("");
-            require(success, "HivePaymentV1: pay order failed");
-        }
+        (success, ) = payable(to).call{value: msg.value.sub(platformFee)}("");
+        require(success, "HivePaymentV1: pay order failed");
 
         Order memory newOrder;
         newOrder.orderId = lastOrderId;
