@@ -38,8 +38,12 @@ module.exports = {
       accounts: [],
     },
   },
+  contractAddress: '',
   platformAddress: '',
   platformFeeRate: 5,
+  testAddress1: '',
+  testAddress2: '',
+  testAddress3: '',
 };
 ```
 
