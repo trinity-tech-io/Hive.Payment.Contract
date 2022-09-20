@@ -1,13 +1,10 @@
-# ELASTOS HIVE PAYMENT
+# Hive Payment Smart Contract
 
-### Introduction
-Elastos Hive Payment contract
+The payment smart contract for Hive storage service when users need to upgrade the pricing plan or require more storage quatos from Hive node being used.
 
+### How To Build
 
-
-### HowTo
-
-- Set enviroment
+### Prepare for enviroment
 Clone the repository onto your local device, and install all depedencies
 
 ```shell
@@ -49,18 +46,30 @@ module.exports = {
 
 **Notice**: *put your private key string in the item "accounts"*.
 
-- Testing
+### Testing
 Run the following command in the terminal to start testing on testnet enviroment.
-
 ```shell
 $ npx hardhat test
 ```
 
-
-- Deploy contracts
+### Deploy contracts
 Deploy contracts by running such command in terminal
-
 ```shell
 $ npx hardhat run scripts/deploy.js --network elastostestnet
 ```
 
+
+
+## Contribution
+
+Any contributions  to this repository would be highly appreciated, including
+- Improving README
+- More test cases
+- Report bug and bugfix
+
+The contribution acitivities can be either by creating an issue or pushing a pull request.
+
+
+## License
+
+This project is licensed under the terms of the [MIT license](https://github.com/elastos-trinity/Elastos.Hive.Payment/blob/main/LICENSE).
